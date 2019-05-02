@@ -312,7 +312,7 @@ eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
 }
 
 bool  LiquidCrystal_I2C_Menu::printTitle(const char title[]) {
-  uint8_t l = (unsigned)strlen(title);
+  uint8_t l = strlen(title);
   char * buffer;
   clear();
   if (l > 0) {
@@ -344,7 +344,7 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
       needRepaint = 0;
       clear();
       // print text
-      for (uint8_t i = 0; i < min(_rows, ((unsigned)strlen(str) + lineLength - 1) / lineLength); i++) {
+      for (uint8_t i = 0; i < min(_rows, (strlen(str) + lineLength - 1) / lineLength); i++) {
         memcpy(buf, &str[offset + i * lineLength], lineLength);
         buf[lineLength] = '\0';
         printAt(0, i, buf);
@@ -354,7 +354,7 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
         setCursor(lineLength, 0);
         write(0); // arrow up
       }
-      if ((unsigned)strlen(str) > (unsigned)(offset + _rows * lineLength)) {
+      if (strlen(str) > (unsigned)(offset + _rows * lineLength)) {
         setCursor(lineLength, _rows - 1);
         write(1); // arrow down
       }
@@ -373,7 +373,7 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
     }
     else if (encoderState == eRight) {
       // scroll down
-      if ((unsigned)strlen(str) > (unsigned)(offset + _rows * lineLength)) {
+      if (strlen(str) > (unsigned)(offset + _rows * lineLength)) {
         offset += lineLength;
         needRepaint = 1;
       }
@@ -384,7 +384,7 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
 
 bool LiquidCrystal_I2C_Menu::isEditable(char ch, const char availSymbols[]) {
   if (ch == '\0') return 1;
-  byte l = (unsigned)strlen(availSymbols);
+  byte l = strlen(availSymbols);
   for (byte i = 0; i < l; i++) {
     if (availSymbols[i] == ch) return 1;
   }
@@ -543,16 +543,16 @@ bool LiquidCrystal_I2C_Menu::getNextSymbol(char &ch, bool direction, const char 
     ch = availSymbols[0];
     return 1;
   }
-  for (uint8_t i = 0; i < (unsigned)strlen(availSymbols); i++) {
+  for (uint8_t i = 0; i < strlen(availSymbols); i++) {
     if (availSymbols[i] == ch) {
       if (direction) {
-        if (++i < (unsigned)strlen(availSymbols)) ch = availSymbols[i];
+        if (++i < strlen(availSymbols)) ch = availSymbols[i];
         else if (looped) ch = availSymbols[0];
         return 1;
       }
       else {
-        if (--i >= 0) ch = availSymbols[i];
-        else if (looped) ch = availSymbols[(unsigned)strlen(availSymbols) - 1];
+        if (i > 0) ch = availSymbols[--i];
+        else if (looped) ch = availSymbols[strlen(availSymbols) - 1];
         return 1;
       }
       return 0;
@@ -844,7 +844,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
         }
       case eNone: {
           #ifdef SCROLL_LONG_CAPTIONS
-            // При бездействии прокручиваем длинные названия
+            // ѕри бездействии прокручиваем длинные названи¤
             _scrollingCaption = subMenu[cursorOffset + offset]->caption;
             if (_scrollingCaption.length() > itemMaxLength) {
               if (_scrollTime < millis()) {

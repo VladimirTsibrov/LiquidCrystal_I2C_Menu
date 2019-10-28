@@ -2,6 +2,7 @@
 #define TSBR_LIQUID_CRYSTAL_I2C_MENU_H
 
 #define SCROLL_LONG_CAPTIONS // Scroll long captions flag
+#define ENCODER_POOL_DELAY 5
 
 #include <inttypes.h>
 #include <Print.h>

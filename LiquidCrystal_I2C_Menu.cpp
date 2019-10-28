@@ -569,28 +569,28 @@ bool LiquidCrystal_I2C_Menu::inputStrVal(const char title[], char buffer[], uint
   return _inputStrVal(title, buffer, len, availSymbols, 0);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, const char **list, uint8_t count, uint8_t preselected) {
-  return _selectVal(title.c_str(), list, count, preselected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, const char **list, uint8_t count, uint8_t preselected, bool show_selected) {
+  return _selectVal(title.c_str(), list, count, preselected, show_selected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], const char **list, uint8_t count, uint8_t preselected) {
-  return _selectVal(title, list, count, preselected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], const char **list, uint8_t count, uint8_t preselected, bool show_selected) {
+  return _selectVal(title, list, count, preselected, show_selected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, String list[], uint8_t count, uint8_t preselected) {
-  return _selectVal(title.c_str(), list, count, preselected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, String list[], uint8_t count, uint8_t preselected, bool show_selected) {
+  return _selectVal(title.c_str(), list, count, preselected, show_selected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], String list[], uint8_t count, uint8_t preselected) {
-  return _selectVal(title, list, count, preselected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], String list[], uint8_t count, uint8_t preselected, bool show_selected) {
+  return _selectVal(title, list, count, preselected, show_selected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, int list[], uint8_t count, uint8_t preselected) {
-  return _selectVal(title.c_str(), list, count, preselected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, int list[], uint8_t count, uint8_t preselected, bool show_selected) {
+  return _selectVal(title.c_str(), list, count, preselected, show_selected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], int list[], uint8_t count, uint8_t preselected) {
-  return _selectVal(title, list, count, preselected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], int list[], uint8_t count, uint8_t preselected, bool show_selected) {
+  return _selectVal(title, list, count, preselected, show_selected);
 }
 
 void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], char *value, uint8_t len) {
@@ -612,7 +612,7 @@ void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], String value, uint8
 }
 
 template <typename T>
-uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t count, uint8_t preselected) {
+uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t count, uint8_t preselected, bool show_selected) {
   uint8_t offset = 0;
   uint8_t cursorOffset = 0;
   uint8_t lineLength = _cols - 3;
@@ -623,6 +623,7 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
 
   createChar(0, scrollUp);
   createChar(1, scrollDown);
+  createChar(2, iconOk);
 
   eEncoderState encoderState = eNone;
   while (1) {
@@ -632,8 +633,12 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
       for (uint8_t i = 0; i < min(count, _rows - hasTitle); i++) {
         _prepareForPrint(buf, list[offset + i], lineLength);
         printfAt(0, i + hasTitle, "  %s ", buf);
-        if (offset + i == selected)
-          printAt(1, i + hasTitle, '*');
+        if (show_selected) {
+          if (offset + i == selected) {
+            setCursor(1, i + hasTitle);
+            write(2);
+          }
+        }
       }
       // Showing cursor
       printAt(0, cursorOffset + hasTitle, '>');
@@ -677,12 +682,13 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
           continue;
         }
       case eButton: {
-          if (offset + cursorOffset != selected) {
+          if ((show_selected)&(offset + cursorOffset != selected)) {
             // set new selected
             if ((selected >= offset) & (selected < offset + _rows - hasTitle))
               printAt(1, selected - offset + hasTitle, ' ');
             selected = offset + cursorOffset;
-            printAt(1, cursorOffset + hasTitle, '*');
+            setCursor(1, cursorOffset + hasTitle);
+            write(2);
             continue;
           }
           else {
@@ -777,14 +783,13 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             _scrollTime = millis() + DELAY_BEFORE_SCROLL;
           #endif
           if (cursorOffset > 0) {  // Moving cursor up if possible
-            if (_scrollPos) {
-              // If previous menu item is scrolling then print it again
-              #ifdef SCROLL_LONG_CAPTIONS
-                //printAt(1, cursorOffset + _showMenuTitle, Blank); xxx
+            #ifdef SCROLL_LONG_CAPTIONS
+              if (_scrollPos) {
+                // If previous menu item is scrolling then print it again
                 printAt(1, cursorOffset + _showMenuTitle, String(subMenu[cursorOffset + offset]->caption).substring(0, itemMaxLength));
                 _scrollPos = 0;
-              #endif
-            }
+              }
+            #endif
             printAt(0, cursorOffset + _showMenuTitle, ' ');
             printAt(0, --cursorOffset + _showMenuTitle, '>');
           }
@@ -801,14 +806,13 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             _scrollTime = millis() + DELAY_BEFORE_SCROLL;
           #endif
           if (cursorOffset < min(_rows - _showMenuTitle, subMenuLen) - 1) {// Moving cursor down if possible
-            if (_scrollPos) {
-              // If previous menu item is scrolling then print it again
-              #ifdef SCROLL_LONG_CAPTIONS
-                //printAt(1, cursorOffset + _showMenuTitle, Blank); xxx
+            #ifdef SCROLL_LONG_CAPTIONS
+              if (_scrollPos) {
+                // If previous menu item is scrolling then print it again
                 printAt(1, cursorOffset + _showMenuTitle, String(subMenu[cursorOffset + offset]->caption).substring(0, itemMaxLength));
                 _scrollPos = 0;
-              #endif
-            }
+              }
+            #endif
             printAt(0, cursorOffset + _showMenuTitle, ' ');
             printAt(0, ++cursorOffset + _showMenuTitle, '>');
           }
@@ -826,6 +830,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             return 0;
           }
           // If selected item has a handler
+          _selectedMenuItem = subMenu[cursorOffset + offset]->key;
           if (subMenu[cursorOffset + offset]->handler != NULL) { 
             (*subMenu[cursorOffset + offset]->handler)(); // then executing it
           }
@@ -844,7 +849,6 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
         }
       case eNone: {
           #ifdef SCROLL_LONG_CAPTIONS
-            // ѕри бездействии прокручиваем длинные названи¤
             _scrollingCaption = subMenu[cursorOffset + offset]->caption;
             if (_scrollingCaption.length() > itemMaxLength) {
               if (_scrollTime < millis()) {
@@ -857,7 +861,6 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
                 }
                 else
                   _scrollTime = millis() + SCROLL_DELAY;
-                //printAt(1, cursorOffset + _showMenuTitle, Blank);
                 printAt(1, cursorOffset + _showMenuTitle, _scrollingCaption.substring(_scrollPos, _scrollPos + itemMaxLength));
               }
             }

@@ -289,7 +289,7 @@ eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
   unsigned long currentTime = millis();
   bool encoderA, encoderB;
   eEncoderState Result = eNone;
-  if (currentTime >= (_prevPoolTime + 5)) {
+  if (currentTime >= (_prevPoolTime + ENCODER_POOL_DELAY)) {
     _prevPoolTime = currentTime;
     if (digitalRead(_pinBtn) == LOW ) {
       if (_pinButtonPrev) {
@@ -629,7 +629,7 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
   while (1) {
     if (needRepaint) {
       needRepaint = 0;
-      // Reaint everything except title
+      // Repaint everything except title
       for (uint8_t i = 0; i < min(count, _rows - hasTitle); i++) {
         _prepareForPrint(buf, list[offset + i], lineLength);
         printfAt(0, i + hasTitle, "  %s ", buf);

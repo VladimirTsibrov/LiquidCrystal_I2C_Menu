@@ -1,7 +1,7 @@
-#ifndef FDB_LIQUID_CRYSTAL_I2C_MENU_H
-#define FDB_LIQUID_CRYSTAL_I2C_MENU_H
+#ifndef TSBR_LIQUID_CRYSTAL_I2C_MENU_H
+#define TSBR_LIQUID_CRYSTAL_I2C_MENU_H
 
-#define SCROLL_LONG_CAPTIONS // Scroll long captions flag. Comment it to reduce the code size
+#define SCROLL_LONG_CAPTIONS // Scroll long captions flag
 
 #include <inttypes.h>
 #include <Print.h>
@@ -53,9 +53,9 @@
 #define Rw B00000010  // Read/Write bit
 #define Rs B00000001  // Register select bit
 
-#define SCROLL_DELAY        800  // Задержка при прокрутке текста
-#define DELAY_BEFORE_SCROLL 4000 // Задержка до начала прокрутки текста
-#define DELAY_AFTER_SCROLL  2000 // Задержка после прокрутки текста
+#define SCROLL_DELAY        800
+#define DELAY_BEFORE_SCROLL 4000
+#define DELAY_AFTER_SCROLL  2000
 
 enum eEncoderState {eNone, eLeft, eRight, eButton};
 
@@ -236,17 +236,18 @@ class LiquidCrystal_I2C_Menu : public Print {
        Selecting value from the list.
        Returns selected index.
     */
-    uint8_t selectVal(const String &, const char**, uint8_t, uint8_t); //title, list of values, count, selected index
-    uint8_t selectVal(const char[], const char**, uint8_t, uint8_t); //title, list of values, count, selected index
-    uint8_t selectVal(const String &, String[], uint8_t, uint8_t); //title, list of values, count, selected index
-    uint8_t selectVal(const char[], String[], uint8_t, uint8_t); //title, list of values, count, selected index
-    uint8_t selectVal(const String &, int[], uint8_t, uint8_t); //title, list of values, count, selected index
-    uint8_t selectVal(const char[], int[], uint8_t, uint8_t); //title, list of values, count, selected index
+    uint8_t selectVal(const String &, const char**, uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
+    uint8_t selectVal(const char[], const char**, uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
+    uint8_t selectVal(const String &, String[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
+    uint8_t selectVal(const char[], String[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
+    uint8_t selectVal(const String &, int[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
+    uint8_t selectVal(const char[], int[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
 
     /**
-       Function to display themenu. Returns the key of the selected menu item.
+       Function to display the menu. Returns the key of the selected menu item.
     */
     uint8_t showMenu(sMenuItem[], uint8_t, bool);
+    uint8_t getSelectedMenuItem(){return _selectedMenuItem;};
   private:
     void send(uint8_t, uint8_t);
     void write4bits(uint8_t);
@@ -275,12 +276,13 @@ class LiquidCrystal_I2C_Menu : public Print {
       String _scrollingCaption;
       unsigned long _scrollTime;
     #endif
+    uint8_t _selectedMenuItem;
     bool _inputLongVal(const char[], long &, long, long);
     bool getNextEditable(char S[], uint8_t lenS, const char availSymbols[], uint8_t &currentPos, bool direction);
     bool isEditable(char ch, const char availSymbols[]);
     bool getNextSymbol(char &ch, bool direction, const char availSymbols[], bool looped = 0);
     bool _inputStrVal(const char title[], char buffer[], uint8_t len, const char availSymbols[], bool _signed);
-    template <typename T> uint8_t _selectVal(const char[], T[], uint8_t, uint8_t);
+    template <typename T> uint8_t _selectVal(const char[], T[], uint8_t, uint8_t, bool);
     bool printTitle(const char title[]);
     void _prepareForPrint(char [], char*, uint8_t);
     void _prepareForPrint(char [], int, uint8_t);
@@ -291,7 +293,7 @@ class LiquidCrystal_I2C_Menu : public Print {
 };
 
 template <typename T> T LiquidCrystal_I2C_Menu::inputVal(const String &title, T minValue, T maxValue, T defaultValue, T step) {
-  return inputIntVal(title.c_str(), minValue, maxValue, defaultValue, step);
+  return inputVal(title.c_str(), minValue, maxValue, defaultValue, step);
 }
 
 template <typename T> T LiquidCrystal_I2C_Menu::inputVal(const char title[], T minValue, T maxValue, T defaultValue, T step) {
@@ -319,7 +321,7 @@ template <typename T> T LiquidCrystal_I2C_Menu::inputValAt(uint8_t x, uint8_t y,
       case eButton:
         return v;
       case eLeft:
-        if (v - step >= minValue) v -= step;
+        if (v >= minValue + step) v -= step;
         else v = minValue;
         break;
       case eRight:
@@ -366,4 +368,4 @@ template <typename T> bool LiquidCrystal_I2C_Menu::inputValBitwise(const char ti
 
   return 0;
 }
-#endif // FDB_LIQUID_CRYSTAL_I2C_MENU_H
+#endif // TSBR_LIQUID_CRYSTAL_I2C_MENU_H

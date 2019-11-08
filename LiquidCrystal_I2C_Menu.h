@@ -1,9 +1,6 @@
 #ifndef TSBR_LIQUID_CRYSTAL_I2C_MENU_H
 #define TSBR_LIQUID_CRYSTAL_I2C_MENU_H
 
-#define SCROLL_LONG_CAPTIONS // Scroll long captions flag
-#define ENCODER_POOL_DELAY 5
-
 #include <inttypes.h>
 #include <Print.h>
 #include <stdarg.h>
@@ -53,6 +50,10 @@
 #define En B00000100  // Enable bit
 #define Rw B00000010  // Read/Write bit
 #define Rs B00000001  // Register select bit
+
+#define SCROLL_LONG_CAPTIONS // Scroll long captions flag
+#define ENCODER_POOL_DELAY 5
+#define NUMERIC_SIGNS "- "
 
 #define SCROLL_DELAY        800
 #define DELAY_BEFORE_SCROLL 4000
@@ -249,6 +250,7 @@ class LiquidCrystal_I2C_Menu : public Print {
     */
     uint8_t showMenu(sMenuItem[], uint8_t, bool);
     uint8_t getSelectedMenuItem(){return _selectedMenuItem;};
+    void attachIdleFunc(void (*IdleFunc)(void));
   private:
     void send(uint8_t, uint8_t);
     void write4bits(uint8_t);
@@ -278,6 +280,7 @@ class LiquidCrystal_I2C_Menu : public Print {
       unsigned long _scrollTime;
     #endif
     uint8_t _selectedMenuItem;
+    void  (*_IdleFunc)() = NULL;
     bool _inputLongVal(const char[], long &, long, long);
     bool getNextEditable(char S[], uint8_t lenS, const char availSymbols[], uint8_t &currentPos, bool direction);
     bool isEditable(char ch, const char availSymbols[]);
@@ -290,7 +293,6 @@ class LiquidCrystal_I2C_Menu : public Print {
     void _prepareForPrint(char [], String, uint8_t);
     uint8_t showSubMenu(uint8_t);
     void encoderIdle();
-
 };
 
 template <typename T> T LiquidCrystal_I2C_Menu::inputVal(const String &title, T minValue, T maxValue, T defaultValue, T step) {
@@ -313,6 +315,7 @@ template <typename T> T LiquidCrystal_I2C_Menu::inputValAt(uint8_t x, uint8_t y,
     return v;
   eEncoderState encoderState = eNone;
   printAt(x, y, v);
+  String S;
   while (1) {
     encoderState = getEncoderState();
     switch (encoderState) {
@@ -322,16 +325,20 @@ template <typename T> T LiquidCrystal_I2C_Menu::inputValAt(uint8_t x, uint8_t y,
       case eButton:
         return v;
       case eLeft:
+        S = String(v);
         if (v >= minValue + step) v -= step;
         else v = minValue;
         break;
       case eRight:
+        S = String(v);
         if (v + step <= maxValue) v += step;
         else v = maxValue;
         break;
     }
+    for (uint8_t i = 0; i < S.length(); i++)
+      S.setCharAt(i, ' ');
+    printAt(x, y, S.c_str());
     printAt(x, y, v);
-    print("     ");
   }
 }
 

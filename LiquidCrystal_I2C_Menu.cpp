@@ -9,7 +9,6 @@ uint8_t scrollDown[8]  = {0x0, 0x0, 0x0, 0x0, 0x1f, 0x11, 0xa, 0x4};
 uint8_t iconOk[8]  = {0x0, 0x1, 0x1, 0x2, 0x12, 0xc, 0x4};
 uint8_t iconCancel[8]  = {0x0, 0x0, 0x11, 0xa, 0x4, 0xa, 0x11};
 
-const char numericSigns[] = "- ";
 
 // When the display powers up, it is configured as follows:
 //
@@ -257,10 +256,10 @@ void LiquidCrystal_I2C_Menu::printAt(uint8_t col, uint8_t row, const Printable& 
 }
 
 void LiquidCrystal_I2C_Menu::printf(const char * format, ...) {
-  char buf[128];
+  char buf[80];
   va_list args;
   va_start (args, format);
-  vsnprintf(buf, 128, format, args);
+  vsnprintf(buf, 80, format, args);
   va_end (args);
   print(buf);
 }
@@ -286,11 +285,10 @@ void LiquidCrystal_I2C_Menu::attachEncoder(uint8_t pinA, uint8_t pinB, uint8_t p
 }
 
 eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
-  unsigned long currentTime = millis();
   bool encoderA, encoderB;
   eEncoderState Result = eNone;
-  if (currentTime >= (_prevPoolTime + ENCODER_POOL_DELAY)) {
-    _prevPoolTime = currentTime;
+  if (millis() - _prevPoolTime > ENCODER_POOL_DELAY) {
+    _prevPoolTime = millis();
     if (digitalRead(_pinBtn) == LOW ) {
       if (_pinButtonPrev) {
         _pinButtonPrev = 0;
@@ -508,7 +506,7 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
                 }
               case eLeft: {
                   if ((_signed) & (pos == 0)) {
-                    if (!getNextSymbol(tmpBuffer[pos], 0, numericSigns, 1)) continue;
+                    if (!getNextSymbol(tmpBuffer[pos], 0, NUMERIC_SIGNS, 1)) continue;
                   }
                   else {
                     if (!getNextSymbol(tmpBuffer[pos], 0, availSymbols)) continue;
@@ -519,7 +517,7 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
                 }
               case eRight: {
                   if ((_signed) & (pos == 0)) {
-                    if (!getNextSymbol(tmpBuffer[pos], 1, numericSigns, 1)) continue;
+                    if (!getNextSymbol(tmpBuffer[pos], 1, NUMERIC_SIGNS, 1)) continue;
                   }
                   else {
                     if (!getNextSymbol(tmpBuffer[pos], 1, availSymbols)) continue;
@@ -794,7 +792,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             printAt(0, --cursorOffset + _showMenuTitle, '>');
           }
           else if (offset > 0) {
-            // Cant move cursor upper. If there are other menu items than show them
+            // Cant move cursor upper. If there are other menu items then show them
             offset--;
             needRepaint = 1;
           }
@@ -817,7 +815,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             printAt(0, ++cursorOffset + _showMenuTitle, '>');
           }
           else if ((cursorOffset + _showMenuTitle + 1 == _rows) & (offset + _rows - _showMenuTitle < subMenuLen)) {
-            // Cant move cursor lower. If there are other menu items than show them
+            // Cant move cursor lower. If there are other menu items then show them
             offset++;
             needRepaint = 1;
           }
@@ -873,8 +871,12 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
   } while (1);
 }
 
-void LiquidCrystal_I2C_Menu::encoderIdle() {
+void LiquidCrystal_I2C_Menu::attachIdleFunc(void (*IdleFunc)(void)) {
+  _IdleFunc = IdleFunc;
+}
 
+void LiquidCrystal_I2C_Menu::encoderIdle() {
+  if (_IdleFunc != NULL) (*_IdleFunc)();
 }
 
 

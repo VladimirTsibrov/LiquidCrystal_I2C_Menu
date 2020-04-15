@@ -290,20 +290,20 @@ eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
   if (millis() - _prevPoolTime > ENCODER_POOL_DELAY) {
     _prevPoolTime = millis();
     if (digitalRead(_pinBtn) == LOW ) {
-      if (_pinButtonPrev) {
-        _pinButtonPrev = 0;
+      if (_buttonPrev) {
+        _buttonPrev = 0;
         Result = eButton;
       }
     }
     else {
-      _pinButtonPrev = 1;
+      _buttonPrev = 1;
       encoderA = digitalRead(_pinA);
       encoderB = digitalRead(_pinB);
-      if ((!encoderA) && (_pinAPrev)) {
+      if ((!encoderA) && (_APrev)) {
         if (encoderB) Result = eRight;
         else          Result = eLeft;
       }
-      _pinAPrev = encoderA;
+      _APrev = encoderA;
     }
   }
   return Result;
@@ -831,6 +831,8 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
           _selectedMenuItem = subMenu[cursorOffset + offset]->key;
           if (subMenu[cursorOffset + offset]->handler != NULL) { 
             (*subMenu[cursorOffset + offset]->handler)(); // then executing it
+            createChar(0, scrollUp);
+            createChar(1, scrollDown);			
           }
           else {// Otherwise calling showSubMenu for this item
             result = showSubMenu(subMenu[cursorOffset + offset]->key);

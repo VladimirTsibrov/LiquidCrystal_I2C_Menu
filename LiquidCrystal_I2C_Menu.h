@@ -269,8 +269,8 @@ class LiquidCrystal_I2C_Menu : public Print {
     uint8_t _pinB;
     uint8_t _pinBtn;
     unsigned long _prevPoolTime;
-    bool _pinButtonPrev;
-    bool _pinAPrev;
+    bool _buttonPrev;
+    bool _APrev;
     bool _showMenuTitle;
     uint8_t _menuLen;
     sMenuItem *_menu;

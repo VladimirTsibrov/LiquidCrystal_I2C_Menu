@@ -1,8 +1,17 @@
+/* Пример использования функции selectVal для выбора значения. Синтаксис:
+ * selectVal(title, list, count, preselected, show_selected), где
+ * title - заголовок
+ * list - массив значений для выбора
+ * count - количество элементов в массиве
+ * preselected - индекс выбранного по умолчанию элемента. По умолчанию -1 - ничего не выбрано
+ * show_selected - флаг отображения указателя на выбранном элементе
+ * Функция возвращает индекс выбранного значения
+ */
 #include <Wire.h>
 #include <LiquidCrystal_I2C_Menu.h>
 LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);
 
-// Encoder pins
+// Пины, к которым подключен энкодер
 #define pinCLK 2
 #define pinDT  3
 #define pinSW  4

@@ -1,8 +1,13 @@
+/* Пример использования функции getEncoderState для работы с энкодером. 
+ * Функция вовращает одно из следующих значений:
+ * eNone, eLeft, eRight, eButton.
+ * Для привязки используемых энкодером пинов вызывается функция attachEncoder.
+ */
 #include <Wire.h>
 #include <LiquidCrystal_I2C_Menu.h>
 LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);
 
-// Encoder pins
+// Пины, к которым подключен энкодер
 #define pinCLK 2
 #define pinDT  3
 #define pinSW  4
@@ -16,20 +21,20 @@ void setup() {
 }
 
 void loop() {
-  // Polling the encoder status
+  // Опрашиваем энкодер
   eEncoderState EncoderState = lcd.getEncoderState();
   switch (EncoderState) {
-    case eLeft:   // Rotating left
+    case eLeft:   // При вращении влево уменьшаем значение переменной
       x--;
       break;
-    case eRight:  // Rotating right
+    case eRight:  // При вращении вправо увеличиваем значение переменной
       x++;
       break;
-    case eButton: // Button pressed
+    case eButton: // При нажатии кнопки энкодера обнуляем значение переменной
       x = 0;
       break;
-    case eNone:   // No action. Exit the function
+    case eNone:   // Энкодер не вращается, кнопка не нажата. Выходим из функции
       return;
   }
-  lcd.printfAt(0, 0, "%d ", x); // Print x
+  lcd.printfAt(0, 0, "%d ", x); // Покажем новое значение x
 }

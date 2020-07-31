@@ -1,16 +1,24 @@
+/* Пример использования функции showMenu для отображения меню. Синтаксис:
+ * showMenu(menu, menuLen, showTitle), где
+ * menu - массив пунктов меню. Тип элементов - sMenuItem
+ * menuLen - количество элементов в меню
+ * showTitle - флаг отображения заголовка в меню (название родительского пункта)
+ * Функция возвращает ключ выбранного пункта меню
+ */
 #include <Wire.h>
 #include <LiquidCrystal_I2C_Menu.h>
 LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);
 
-// Encoder pins
+// Пины, к которым подключен энкодер
 #define pinCLK 2
 #define pinDT  3
 #define pinSW  4
 
-// Declaring the values used in the menu to define the parent-child relationship
+// Объявим перечисление, используемое в качестве ключа пунктов меню
 enum {mkBack, mkRoot, mkRun, mkOptions, mkMode, mkSpeed, mkLog, mkSelftest, mkHelp, mkFAQ, mkIndex, mkAbout};
 
-// Menu definition
+// Описание меню
+// структура пункта меню: {ParentKey, Key, Caption, [Handler]}
 sMenuItem menu[] = {
   {mkBack, mkRoot, "Menu demo"},
     {mkRoot, mkRun, "Run"},
@@ -28,7 +36,6 @@ sMenuItem menu[] = {
     {mkRoot, mkBack, "Exit menu"}
 };
 
-// Determine the number of items in the menu
 uint8_t menuLen = sizeof(menu) / sizeof(sMenuItem);
 
 void setup() {
@@ -37,7 +44,9 @@ void setup() {
 }
 
 void loop() {
+  // Показываем меню
   uint8_t selectedMenuItem = lcd.showMenu(menu, menuLen, 1);
+  // И выполняем действия в соответствии с выбранным пунктом
   if (selectedMenuItem == mkRun)
     lcd.print("Run selected");
   else if (selectedMenuItem == mkMode)
@@ -56,5 +65,5 @@ void loop() {
     lcd.print("About selected");
   else if (selectedMenuItem == mkBack)
     lcd.print("Exit selected");
-delay(2000);
+  delay(2000);
 }

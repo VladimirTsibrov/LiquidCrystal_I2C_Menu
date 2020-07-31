@@ -1,15 +1,21 @@
+/* Пример использования функции inputStrVal для маскированного ввода. Синтаксис:
+ * inputStrVal(title, buffer, len, availSymbols), где
+ * title - заголовок
+ * buffer - указатель на массив char для вводимых символов
+ * len - длина вводимого значения
+ * availSymbols - массив символов, доступных для ввода и редактирования
+ */
+ 
 #include <Wire.h>
 #include <LiquidCrystal_I2C_Menu.h>
-#define cols 20
-#define rows 4
-LiquidCrystal_I2C_Menu lcd(0x27, cols, rows);
+LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);
 
-// Encoder pins
+// Пины, к которым подключен энкодер
 #define pinCLK 2
 #define pinDT  3
 #define pinSW  4
 
-char ip[] = "192.168.001.001";
+char ip[] = "192.168.001.001"; // Массив символов с начальным значением/маской
 
 void setup() {
   lcd.begin();
@@ -23,14 +29,5 @@ void loop() {
   }
   else
     lcd.print("Input canceled");
-  press_button_to_continue();
-}
-
-void press_button_to_continue(){
-  // Waiting for button to continue
-  if (rows == 4) {
-    lcd.printAt(0, 2, "Press button");
-    lcd.printAt(0, 3, "to continue");
-  }
   while (lcd.getEncoderState() != eButton);
 }

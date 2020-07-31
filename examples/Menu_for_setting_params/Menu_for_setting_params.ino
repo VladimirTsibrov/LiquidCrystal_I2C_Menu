@@ -1,7 +1,7 @@
-/* An example of using the menu to set parameters
- * with saving them in the EEPROM, 
- * displaying in menu items
- * and using handlers
+/* Пример использования меню для ввода параметров
+ * с отображением их текущих значений в пунктах меню
+ * и сохранением в EEPROM. 
+ * Обработка выбранных пунктов осуществляется в обработчиках.
  */
  
 #include <Wire.h>
@@ -9,36 +9,36 @@
 LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);
 #include <EEPROM.h>
 
-// Encoder pins
+// Пины, к которым подключен энкодер
 #define pinCLK 2
 #define pinDT  3
 #define pinSW  4
 
-uint8_t brightness;
+uint8_t brightness; // Параметры, которые мы будем именять
 uint8_t _delay;
 
-// Declaring the values used in the menu to define the parent-child relationship
+// Объявим перечисление, используемое в качестве ключа пунктов меню
 enum {mkBack, mkRoot, mkSetBrightness, mkSetDelay, mkDefaults};
 
-// Handlers are implemented after the menu, so their prototypes are needed:
+// Прототипы обработчиков пунктов меню:
 void SetBrightness();
 void SetDelay();
 void SetDefaults();
 
-// Menu definition
+// Описание меню
+// структура пункта меню: {ParentKey, Key, Caption, [Handler]}
 sMenuItem menu[] = {
-/*{ParentKey, Key, Caption, [Handler]} */
+// {ParentKey, Key, Caption, [Handler]} - структура пункта меню
   {mkBack, mkRoot, "Options", NULL},
-    {mkRoot, mkSetBrightness, NULL, SetBrightness}, // Captions of these items
-    {mkRoot, mkSetDelay, NULL, SetDelay},           // will be generated later
+    {mkRoot, mkSetBrightness, NULL, SetBrightness}, // Названия этих пунктов
+    {mkRoot, mkSetDelay, NULL, SetDelay},           // будут сгенерированы позже
     {mkRoot, mkDefaults, "Defaults", SetDefaults},
     {mkRoot, mkBack, "Back", NULL}
 };
 
-// Determine the number of items in the menu
 uint8_t menuLen = sizeof(menu) / sizeof(sMenuItem);
 
-// This function returns the index of the menu item by its key value
+// Функция поиска индекса пункта по его ключу
 int getItemIndexByKey(uint8_t key){
   for (uint8_t i = 0; i < menuLen; i++)
     if (menu[i].key == key)
@@ -46,11 +46,11 @@ int getItemIndexByKey(uint8_t key){
   return -1;
 }
 
-// Function of forming the caption of the menu item with the value
+// Функция формирования названия пункта меню, содержащего значение параметра
 void updateCaption(uint8_t key, char format[], int value){
-  // key - the key of the updated menu item
-  // format - template for assembling the caption of the menu item
-  // value - value added to caption
+  // key - ключ пункта меню, для которого обновляется навание
+  // format - шаблон названия со значением
+  // value - значение, добавляемое в название
   uint8_t index = getItemIndexByKey(key);
   char* buf = (char*) malloc(40);
   sprintf(buf, format, value);
@@ -59,21 +59,29 @@ void updateCaption(uint8_t key, char format[], int value){
   free(buf);
 }
 
-// Handler for changing the brightness value
+// Обработчик для пункта меню Brightness
 void SetBrightness(){
+  // Запрашиваем новое значение
   brightness = lcd.inputVal<uint8_t>("Input brightness(%)", 0, 100, brightness, 5);
+  // Сохраняем его в EEPROM
   EEPROM.update(0, brightness);
+  // Обновляем название пункта меню
   updateCaption(mkSetBrightness, "Brightness (%d%%)", brightness);
+  // Далее может распологаться код - реакция на изменение значения Brightness
 }
 
-// Handler for changing the _delay value
+// Обработчик для пункта меню Delay
 void SetDelay(){
+  // Запрашиваем новое значение
   _delay = lcd.inputVal<uint8_t>("Input delay(ms)", 0, 20, _delay);
+  // Сохраняем его в EEPROM
   EEPROM.update(1, _delay);
+  // Обновляем название пункта меню
   updateCaption(mkSetDelay, "Delay (%dms)", _delay);
+  // Далее может распологаться код - реакция на изменение значения Delay
 }
 
-// Handler for setting default values
+// Обработчик для пункта меню Defaults
 void SetDefaults(){
   brightness = 50;
   _delay = 10;
@@ -81,21 +89,22 @@ void SetDefaults(){
   EEPROM.update(1, _delay);
   updateCaption(mkSetBrightness, "Brightness (%d%%)", brightness);
   updateCaption(mkSetDelay, "Delay (%dms)", _delay);
+  // Далее может распологаться код - реакция на изменение значений Delay и Brightness
 }
 
-// Redraw the information on the screen
+// Перерисовка информации на экране
 void LCDRepaint(){
   lcd.clear();
   lcd.printfAt(0, 0, "Brightness (%d%%)", brightness);
   lcd.printfAt(0, 1, "Delay (%dms)", _delay);
-  lcd.printAt(0, 3, "Press btn for menu");
+  lcd.printAt(0, 3, "Press enter for menu");
 }
 
 void setup() {
   lcd.begin();
   lcd.attachEncoder(pinDT, pinCLK, pinSW);
 
-  // Get the brightness and _delay values from the EEPROM
+  // Считываем значения brightness и _delay из EEPROM
   brightness = EEPROM.read(0);
   if (brightness > 100) {
     brightness = 50;
@@ -107,7 +116,7 @@ void setup() {
     EEPROM.write(1, _delay);
   }
   
-  // Update the menu item captions
+  // Формируем названия пунктов меню
   updateCaption(mkSetBrightness, "Brightness (%d%%)", brightness);
   updateCaption(mkSetDelay, "Delay (%dms)", _delay);
   
@@ -115,9 +124,10 @@ void setup() {
 }
   
 void loop() {
-  if (lcd.getEncoderState() == eButton) { // By pressing the button
-    lcd.showMenu(menu, menuLen, 1); // show the menu
-    LCDRepaint(); // then redraw the screen
+  // Для изменения параметров необходимо нажать кнопку
+  if (lcd.getEncoderState() == eButton) { // При нажатии
+    lcd.showMenu(menu, menuLen, 1); // показываем меню
+    LCDRepaint(); // после чего обновляем информацию на дисплее
   }
-  // And the rest of the time we perform some actions.
+  // Далее может располагаться основной функционал программы
 }

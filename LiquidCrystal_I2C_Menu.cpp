@@ -290,20 +290,20 @@ eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
   if (millis() - _prevPoolTime > ENCODER_POOL_DELAY) {
     _prevPoolTime = millis();
     if (digitalRead(_pinBtn) == LOW ) {
-      if (_buttonPrev) {
-        _buttonPrev = 0;
+      if (_pinButtonPrev) {
+        _pinButtonPrev = 0;
         Result = eButton;
       }
     }
     else {
-      _buttonPrev = 1;
+      _pinButtonPrev = 1;
       encoderA = digitalRead(_pinA);
       encoderB = digitalRead(_pinB);
-      if ((!encoderA) && (_APrev)) {
+      if ((!encoderA) && (_pinAPrev)) {
         if (encoderB) Result = eRight;
         else          Result = eLeft;
       }
-      _APrev = encoderA;
+      _pinAPrev = encoderA;
     }
   }
   return Result;
@@ -341,36 +341,36 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
     if (needRepaint) {
       needRepaint = 0;
       clear();
-      // print text
+      // Вывод фрамента текстовой строки
       for (uint8_t i = 0; i < min(_rows, (strlen(str) + lineLength - 1) / lineLength); i++) {
         memcpy(buf, &str[offset + i * lineLength], lineLength);
         buf[lineLength] = '\0';
         printAt(0, i, buf);
       }
-      // show scrollbar
+      // Отображение полосы прокрутки
       if (offset > 0) {
         setCursor(lineLength, 0);
-        write(0); // arrow up
+        write(0); // стрелка вверх
       }
       if (strlen(str) > (unsigned)(offset + _rows * lineLength)) {
         setCursor(lineLength, _rows - 1);
-        write(1); // arrow down
+        write(1); // стрелка вниз
       }
     }
 
     encoderState = getEncoderState();
     if (encoderState == eNone) {
-      encoderIdle(); // no action
+      encoderIdle(); // При бездействии выполняем encoderIdle
     }
     else if (encoderState == eLeft) {
-      // scroll up
+      // Выполнить прокрутку вверх
       if (offset > 0) {
         offset -= lineLength;
         needRepaint = 1;
       }
     }
     else if (encoderState == eRight) {
-      // scroll down
+      // Выполнить прокрутку вниз
       if (strlen(str) > (unsigned)(offset + _rows * lineLength)) {
         offset += lineLength;
         needRepaint = 1;
@@ -426,7 +426,7 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
   setCursor(_cols - 1, hasTitle); // Cancel
   write(1);
 
-  // Jump to the first editable symbol
+  // Переместимся к первому редактируемому символу
   if (!_signed & (!isEditable(tmpBuffer[pos], availSymbols))) {
     if (!getNextEditable(tmpBuffer, len, availSymbols, pos, 1))
       setCursor(_cols - 3, hasTitle);
@@ -437,7 +437,7 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
 
   cursor();
 
-  // Main loop - select the symbol for editing or OK/Cancel
+  // Основной цикл - выбор символа для редактирования или OK/Cancel
   while (1) {
     encoderState = getEncoderState();
     switch (encoderState) {
@@ -445,13 +445,13 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
           encoderIdle();
           continue;
         }
-      case eLeft: { // Moving left
-          if (pos == 0) continue; // Cant move left any more
+      case eLeft: { // Переместиться влево
+          if (pos == 0) continue; // Левее уже некуда
           if ((pos == 1) & (_signed)) {
             setCursor(--pos, hasTitle);
             continue;
           }
-          if (pos == 255) { // Cancel selected, jump to OK
+          if (pos == 255) { // Курсор на кнопке Cancel, переместим его к OK
             setCursor(_cols - 3, hasTitle);
             pos--;
             continue;
@@ -460,14 +460,14 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
             setCursor(pos, hasTitle);
           continue;
         }
-      case eRight: { // Moving right
-          if (pos == 255) continue; // Cant move right any more
-          if (pos == 254) { // Ok selected, jump to Cancel
+      case eRight: { // Переместиться вправо
+          if (pos == 255) continue; // Правее уже некуда
+          if (pos == 254) { // Курсор на кнопке Ok, переместим его к Cancel
             setCursor(_cols - 1, hasTitle);
             pos++;
             continue;
           }
-          if (pos == l - 1) { // Last symbol selected, jump to OK
+          if (pos == l - 1) { // Курсор на последнем символе, переместим его к OK
             setCursor(_cols - 3, hasTitle);
             pos = 254;
             continue;
@@ -480,19 +480,19 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
           }
           continue;
         }
-      case eButton: { // Button pressed
-          if (pos == 255) {
+      case eButton: { // Нажата кнопка. Анализируем положение курсора
+          if (pos == 255) { // Выбран Cancel
             noCursor();
             clear();
             return 0; // Cancel
           }
-          if (pos == 254) { // OK
+          if (pos == 254) { // Выбран OK
             noCursor();
             clear();
             memcpy(buffer, tmpBuffer, l);
             return 1;
           }
-          // Editing the selected symbol
+          // Редактирование выбранного символа
           encoderState = eNone;
           //setCursor(pos, hasTitle);
           blink();
@@ -627,7 +627,7 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
   while (1) {
     if (needRepaint) {
       needRepaint = 0;
-      // Repaint everything except title
+      // Перерисовка всего содержимого экрана кроме заголовка
       for (uint8_t i = 0; i < min(count, _rows - hasTitle); i++) {
         _prepareForPrint(buf, list[offset + i], lineLength);
         printfAt(0, i + hasTitle, "  %s ", buf);
@@ -638,16 +638,16 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
           }
         }
       }
-      // Showing cursor
+      // Вывод курсора
       printAt(0, cursorOffset + hasTitle, '>');
-      // Showing scrollbar
+      // Отображение полосы прокрутки
       if (offset > 0) {
         setCursor(_cols - 1, hasTitle);
-        write(0); // Arrow up
+        write(0); // стрелка вверх
       }
       if (offset + _rows - hasTitle < count) {
         setCursor(_cols - 1, _rows - 1);
-        write(1); // Arrow down
+        write(1); // стрелка вниз
       }
     }
     encoderState = getEncoderState();
@@ -681,7 +681,7 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
         }
       case eButton: {
           if ((show_selected)&(offset + cursorOffset != selected)) {
-            // set new selected
+            // Изменился выбранный элемент
             if ((selected >= offset) & (selected < offset + _rows - hasTitle))
               printAt(1, selected - offset + hasTitle, ' ');
             selected = offset + cursorOffset;
@@ -722,7 +722,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
   eEncoderState encoderState;
   subMenuLen = 0;
   uint8_t itemMaxLength = _cols - 1;
-  // Filling subMenu array
+  // Формируем массив подменю
   for (uint8_t i = 0; i < _menuLen; i++) {
     if (_menu[i].key == key)
       subMenuIndex = i;
@@ -733,10 +733,10 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
     }
   }
 
-  if (subMenuLen == 0) // There is no submenu
-      return key; // So return the key of selected menu item
+  if (subMenuLen == 0) // Подменю нет
+      return key; // Вернем ключ выбранного пункта
 
-  // Showing submenu
+  // Отображение подменю
   #ifdef SCROLL_LONG_CAPTIONS
     _scrollPos = 0;
     _scrollTime = millis() + DELAY_BEFORE_SCROLL;
@@ -776,14 +776,14 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
     encoderState = getEncoderState();
     switch (encoderState) {
       case eLeft: {
-          // Scrolling up
+          // Перемещение курсора вверх
           #ifdef SCROLL_LONG_CAPTIONS
             _scrollTime = millis() + DELAY_BEFORE_SCROLL;
           #endif
-          if (cursorOffset > 0) {  // Moving cursor up if possible
+          if (cursorOffset > 0) {  // Перемещаем курсор без перерисовки экрана
             #ifdef SCROLL_LONG_CAPTIONS
               if (_scrollPos) {
-                // If previous menu item is scrolling then print it again
+                // Если предыдущий пункт прокручивался, то печатаем его заново
                 printAt(1, cursorOffset + _showMenuTitle, String(subMenu[cursorOffset + offset]->caption).substring(0, itemMaxLength));
                 _scrollPos = 0;
               }
@@ -792,21 +792,21 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             printAt(0, --cursorOffset + _showMenuTitle, '>');
           }
           else if (offset > 0) {
-            // Cant move cursor upper. If there are other menu items then show them
+            // Курсор уже в верхней позиции. Если есть пункты выше, выведем их на экран
             offset--;
             needRepaint = 1;
           }
           break;
         }
       case eRight: {
-          // Scrolling down
+          // Перемещение курсора вниз
           #ifdef SCROLL_LONG_CAPTIONS
             _scrollTime = millis() + DELAY_BEFORE_SCROLL;
           #endif
           if (cursorOffset < min(_rows - _showMenuTitle, subMenuLen) - 1) {// Moving cursor down if possible
             #ifdef SCROLL_LONG_CAPTIONS
               if (_scrollPos) {
-                // If previous menu item is scrolling then print it again
+                // Если предыдущий пункт прокручивался, то печатаем его заново
                 printAt(1, cursorOffset + _showMenuTitle, String(subMenu[cursorOffset + offset]->caption).substring(0, itemMaxLength));
                 _scrollPos = 0;
               }
@@ -815,26 +815,27 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             printAt(0, ++cursorOffset + _showMenuTitle, '>');
           }
           else if ((cursorOffset + _showMenuTitle + 1 == _rows) & (offset + _rows - _showMenuTitle < subMenuLen)) {
-            // Cant move cursor lower. If there are other menu items then show them
+            // Курсор уже в нижней позиции. Если есть пункты ниже, выведем их на экран
             offset++;
             needRepaint = 1;
           }
           break;
         }
       case eButton: {
-          // Item selected
+          // Выбор пункта меню
           if (subMenu[cursorOffset + offset]->key == 0) { // It's "Back"
             free(subMenu);
             return 0;
           }
-          // If selected item has a handler
+          // Если для данного пункта есть обработчик ...
           _selectedMenuItem = subMenu[cursorOffset + offset]->key;
           if (subMenu[cursorOffset + offset]->handler != NULL) { 
-            (*subMenu[cursorOffset + offset]->handler)(); // then executing it
+            (*subMenu[cursorOffset + offset]->handler)(); // ... то выполним его
+            // Стрелки для прокрутки могли испортить, создадим их заново
             createChar(0, scrollUp);
-            createChar(1, scrollDown);			
+            createChar(1, scrollDown);
           }
-          else {// Otherwise calling showSubMenu for this item
+          else {// В противном случае пробуем вывести подменю для данного пункта
             result = showSubMenu(subMenu[cursorOffset + offset]->key);
             if (result != 0) {
               free(subMenu);
@@ -939,4 +940,4 @@ void LiquidCrystal_I2C_Menu::printstr(const char c[]) {
   //This function is not identical to the function used for "real" I2C displays
   //it's here so the user sketch doesn't have to be changed
   print(c);
-}
+} 

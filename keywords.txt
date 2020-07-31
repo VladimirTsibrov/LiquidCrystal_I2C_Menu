@@ -53,6 +53,7 @@ inputValBitwise	KEYWORD2
 inputStrVal	KEYWORD2
 selectVal	KEYWORD2
 showMenu	KEYWORD2
+attachIdleFunc	KEYWORD2
 
 ################################################
 # Constants (LITERAL1)

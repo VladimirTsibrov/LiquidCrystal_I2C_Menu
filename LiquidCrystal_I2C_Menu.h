@@ -190,17 +190,17 @@ class LiquidCrystal_I2C_Menu : public Print {
     void printAt(uint8_t, uint8_t, const Printable&);
 
     /**
-       printf - print formatted string.
+       printf - печать форматированных строк.
     */
     void printf(const char *, ...);
 
     /**
-       printfAt - print formatted string from a specified position.
+       printfAt - печать форматированных строк с указанной позиции.
     */
     void printfAt(uint8_t, uint8_t, const char *, ...);
 
     /**
-       Set pins for rotary encoder
+       Установка пинов для энкодера
     */
     void attachEncoder(uint8_t, uint8_t, uint8_t);
 
@@ -210,23 +210,22 @@ class LiquidCrystal_I2C_Menu : public Print {
     eEncoderState getEncoderState();
 
     /**
-       printMultiline - print multi-line text with the ability to scroll.
-       Exit by pressing the button.
+       printMultiline - печать текста с возможностью вертикальной прокрутки.
     */
     void printMultiline(const String &);
     void printMultiline(const char[]);
 
     /**
-       Entering values by increment and decrement of the initial value.
-       inputValAt does not clear lcd allowing you to use printf to display the title.
+       Ввод значений путем инкремента/декремента начального значения.
+       inputValAt не очищает экран, позволяя использовать printf для вывод заголовка.
     */
     template <typename T> T inputVal(const String &, T, T, T, T = 1); // title, min, max, default, step = 1
     template <typename T> T inputVal(const char[], T, T, T, T = 1); // title, min, max, default, step = 1
     template <typename T> T inputValAt(uint8_t, uint8_t, T, T, T, T = 1); // x, y, min, max, default, step = 1
 
     /**
-       Entering numeric and string values by editing individual characters.
-       Returns TRUE if the user has confirmed input.
+       Ввод числовых и строковых значений путем редактирования отдельных разрядов.
+       Возвращает TRUE если пользователь подтвердил ввод.
     */
     template <typename T> bool inputValBitwise(const String &, T &, uint8_t, uint8_t = 0, bool _signed = 0); // title, value, precision, scale
     template <typename T> bool inputValBitwise(const char[], T &, uint8_t, uint8_t = 0, bool _signed = 0); // title, value, precision, scale
@@ -235,8 +234,7 @@ class LiquidCrystal_I2C_Menu : public Print {
 
 
     /**
-       Selecting value from the list.
-       Returns selected index.
+       Выбор значения из списка. Возвращает индекс выбранного элемента.
     */
     uint8_t selectVal(const String &, const char**, uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
     uint8_t selectVal(const char[], const char**, uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
@@ -246,7 +244,7 @@ class LiquidCrystal_I2C_Menu : public Print {
     uint8_t selectVal(const char[], int[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
 
     /**
-       Function to display the menu. Returns the key of the selected menu item.
+       Функция отображения меню. Возвращает ключ выбранного пункта меню.
     */
     uint8_t showMenu(sMenuItem[], uint8_t, bool);
     uint8_t getSelectedMenuItem(){return _selectedMenuItem;};
@@ -269,8 +267,8 @@ class LiquidCrystal_I2C_Menu : public Print {
     uint8_t _pinB;
     uint8_t _pinBtn;
     unsigned long _prevPoolTime;
-    bool _buttonPrev;
-    bool _APrev;
+    bool _pinButtonPrev;
+    bool _pinAPrev;
     bool _showMenuTitle;
     uint8_t _menuLen;
     sMenuItem *_menu;
@@ -358,7 +356,7 @@ template <typename T> bool LiquidCrystal_I2C_Menu::inputValBitwise(const char ti
   if (value == 0) S.replace("1", "0");
 
   dotPos = S.lastIndexOf(".");
-  if (S.length() > (unsigned)(precision + (dotPos >= 0))) return 0; // The value does not match the specified precision
+  if (S.length() > (unsigned)(precision + (dotPos >= 0))) return 0; // Значение не соответствует заданной точности
   S.replace(" ", "0");
   if ((dotPos > 0) & (dotPos < precision - scale)) S = "0" + S;
   if (_signed) {
@@ -376,4 +374,4 @@ template <typename T> bool LiquidCrystal_I2C_Menu::inputValBitwise(const char ti
 
   return 0;
 }
-#endif // TSBR_LIQUID_CRYSTAL_I2C_MENU_H
+#endif // TSBR_LIQUID_CRYSTAL_I2C_MENU_H 

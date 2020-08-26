@@ -34,8 +34,12 @@ void setup() {
 int x = 0;
 
 void loop() {
-  // Для проверки вызовем любую функцию библиотеки,
-  // которая ожидает действий от пользователя:
-  x = lcd.inputVal("Input some val", 0, 100, x);
-  lcd.printMultiline("Some text here");
+  myIdleFunc();
+  if (lcd.getEncoderState() == eButton) {
+    // Для проверки вызовем любую функцию библиотеки,
+    // которая ожидает действий от пользователя:
+    x = lcd.inputVal("Input some val", 0, 100, x);
+    lcd.printMultiline("Some text here");
+    lcd.clear();
+  }
 }

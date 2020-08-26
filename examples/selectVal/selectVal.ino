@@ -24,7 +24,7 @@ void setup() {
 void loop() {
   int index;
   String list[] = {"Off", "On"};
-  index = lcd.selectVal("Turn backlight", list, 2, lcd.getBacklight());
+  index = lcd.selectVal("Turn backlight", list, 2, true, lcd.getBacklight());
   lcd.setBacklight(index);
   lcd.printf("Backlight turned %s", list[index].c_str());
   delay(2000);

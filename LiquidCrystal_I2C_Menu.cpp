@@ -567,28 +567,28 @@ bool LiquidCrystal_I2C_Menu::inputStrVal(const char title[], char buffer[], uint
   return _inputStrVal(title, buffer, len, availSymbols, 0);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, const char **list, uint8_t count, uint8_t preselected, bool show_selected) {
-  return _selectVal(title.c_str(), list, count, preselected, show_selected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, const char **list, uint8_t count, bool show_selected, uint8_t preselected) {
+  return _selectVal(title.c_str(), list, count, show_selected, preselected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], const char **list, uint8_t count, uint8_t preselected, bool show_selected) {
-  return _selectVal(title, list, count, preselected, show_selected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], const char **list, uint8_t count, bool show_selected, uint8_t preselected) {
+  return _selectVal(title, list, count, show_selected, preselected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, String list[], uint8_t count, uint8_t preselected, bool show_selected) {
-  return _selectVal(title.c_str(), list, count, preselected, show_selected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, String list[], uint8_t count, bool show_selected, uint8_t preselected) {
+  return _selectVal(title.c_str(), list, count, show_selected, preselected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], String list[], uint8_t count, uint8_t preselected, bool show_selected) {
-  return _selectVal(title, list, count, preselected, show_selected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], String list[], uint8_t count, bool show_selected, uint8_t preselected) {
+  return _selectVal(title, list, count, show_selected, preselected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, int list[], uint8_t count, uint8_t preselected, bool show_selected) {
-  return _selectVal(title.c_str(), list, count, preselected, show_selected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, int list[], uint8_t count, bool show_selected, uint8_t preselected) {
+  return _selectVal(title.c_str(), list, count, show_selected, preselected);
 }
 
-uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], int list[], uint8_t count, uint8_t preselected, bool show_selected) {
-  return _selectVal(title, list, count, preselected, show_selected);
+uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], int list[], uint8_t count, bool show_selected, uint8_t preselected) {
+  return _selectVal(title, list, count, show_selected, preselected);
 }
 
 void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], char *value, uint8_t len) {
@@ -610,7 +610,7 @@ void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], String value, uint8
 }
 
 template <typename T>
-uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t count, uint8_t preselected, bool show_selected) {
+uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t count, bool show_selected, uint8_t preselected) {
   uint8_t offset = 0;
   uint8_t cursorOffset = 0;
   uint8_t lineLength = _cols - 3;
@@ -691,7 +691,7 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
           }
           else {
             clear();
-            return selected;
+            return offset + cursorOffset;
           }
         }
 

@@ -236,12 +236,12 @@ class LiquidCrystal_I2C_Menu : public Print {
     /**
        Выбор значения из списка. Возвращает индекс выбранного элемента.
     */
-    uint8_t selectVal(const String &, const char**, uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
-    uint8_t selectVal(const char[], const char**, uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
-    uint8_t selectVal(const String &, String[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
-    uint8_t selectVal(const char[], String[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
-    uint8_t selectVal(const String &, int[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
-    uint8_t selectVal(const char[], int[], uint8_t, uint8_t = -1, bool = 1); //title, list of values, count, selected index, show selected
+    uint8_t selectVal(const String &, const char**, uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const char[], const char**, uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const String &, String[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const char[], String[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const String &, int[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const char[], int[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
 
     /**
        Функция отображения меню. Возвращает ключ выбранного пункта меню.
@@ -284,7 +284,7 @@ class LiquidCrystal_I2C_Menu : public Print {
     bool isEditable(char ch, const char availSymbols[]);
     bool getNextSymbol(char &ch, bool direction, const char availSymbols[], bool looped = 0);
     bool _inputStrVal(const char title[], char buffer[], uint8_t len, const char availSymbols[], bool _signed);
-    template <typename T> uint8_t _selectVal(const char[], T[], uint8_t, uint8_t, bool);
+    template <typename T> uint8_t _selectVal(const char[], T[], uint8_t, bool, uint8_t);
     bool printTitle(const char title[]);
     void _prepareForPrint(char [], char*, uint8_t);
     void _prepareForPrint(char [], int, uint8_t);

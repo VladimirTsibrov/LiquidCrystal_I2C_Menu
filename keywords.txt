@@ -54,6 +54,7 @@ inputStrVal	KEYWORD2
 selectVal	KEYWORD2
 showMenu	KEYWORD2
 attachIdleFunc	KEYWORD2
+getSelectedMenuItem	KEYWORD2
 
 ################################################
 # Constants (LITERAL1)

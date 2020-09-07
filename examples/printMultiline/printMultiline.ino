@@ -1,6 +1,5 @@
 /* Пример использования функции printMultiline
  */
-#include <avr/pgmspace.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C_Menu.h>
 LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);

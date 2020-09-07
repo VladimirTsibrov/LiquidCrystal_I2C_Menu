@@ -24,7 +24,6 @@ void setup() {
 }
 
 void loop() {
-
   String list[] = {"Europa+", "Record", "DFM", "Retro FM", "Energy"};
   index = lcd.selectVal("Select station", list, 5, true, index);
   lcd.printf("%s selected", list[index].c_str());

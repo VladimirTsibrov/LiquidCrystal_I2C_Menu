@@ -51,7 +51,8 @@
 #define Rw B00000010  // Read/Write bit
 #define Rs B00000001  // Register select bit
 
-#define SCROLL_LONG_CAPTIONS // Scroll long captions flag
+//#define CYRILLIC_DISPLAY // Раскомментировать для поддержки дисплеев с кириллицей
+#define SCROLL_LONG_CAPTIONS // Раскомментировать для прокрутки длинных названий в меню и списках
 #define ENCODER_POOL_DELAY 5
 #define NUMERIC_SIGNS "- "
 
@@ -68,6 +69,10 @@ struct sMenuItem {
   void    (*handler)();
 };
 
+#ifdef CYRILLIC_DISPLAY
+  uint8_t strlenUTF8(char *);
+  void substrUTF8(char*, char*, uint8_t, uint8_t);
+#endif
 
 /**
    This is the driver for the Liquid Crystal LCD displays that use the I2C bus.
@@ -274,15 +279,14 @@ class LiquidCrystal_I2C_Menu : public Print {
     sMenuItem *_menu;
     #ifdef SCROLL_LONG_CAPTIONS
       uint8_t _scrollPos;
-      String _scrollingCaption;
       unsigned long _scrollTime;
     #endif
     uint8_t _selectedMenuItem;
     void  (*_IdleFunc)() = NULL;
     bool _inputLongVal(const char[], long &, long, long);
     bool getNextEditable(char S[], uint8_t lenS, const char availSymbols[], uint8_t &currentPos, bool direction);
-    bool isEditable(char ch, const char availSymbols[]);
-    bool getNextSymbol(char &ch, bool direction, const char availSymbols[], bool looped = 0);
+    bool isEditable(const char* ch, const char availSymbols[]);
+    bool getNextSymbol(char *ch, bool direction, const char availSymbols[], bool looped = 0);
     bool _inputStrVal(const char title[], char buffer[], uint8_t len, const char availSymbols[], bool _signed);
     template <typename T> uint8_t _selectVal(const char[], T[], uint8_t, bool, uint8_t);
     bool printTitle(const char title[]);
@@ -374,4 +378,5 @@ template <typename T> bool LiquidCrystal_I2C_Menu::inputValBitwise(const char ti
 
   return 0;
 }
+
 #endif // TSBR_LIQUID_CRYSTAL_I2C_MENU_H 

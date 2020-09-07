@@ -5,10 +5,117 @@
 
 uint8_t scrollUp[8]  = {0x4, 0xa, 0x11, 0x1f};
 uint8_t scrollDown[8]  = {0x0, 0x0, 0x0, 0x0, 0x1f, 0x11, 0xa, 0x4};
+uint8_t scrollBoth[8]  = {0x4, 0xa, 0x11, 0x1f, 0x1f, 0x11, 0xa, 0x4};
 
 uint8_t iconOk[8]  = {0x0, 0x1, 0x1, 0x2, 0x12, 0xc, 0x4};
 uint8_t iconCancel[8]  = {0x0, 0x0, 0x11, 0xa, 0x4, 0xa, 0x11};
 
+#ifdef CYRILLIC_DISPLAY
+  #include <avr/pgmspace.h>
+  // Таблица перекодировки для дисплеев с поддержкой кириллицы
+  const uint8_t rusRecodeTable[] PROGMEM = {
+    'A',   // А
+    160,   // Б
+    'B',   // В
+    161,   // Г
+    224,   // Д
+    'E',   // Е
+    163,   // Ж
+    164,   // З
+    165,   // И
+    166,   // Й
+    'K',   // К
+    167,   // Л
+    'M',   // М
+    'H',   // Н
+    'O',   // О
+    168,   // П
+    'P',   // Р
+    'C',   // С
+    'T',   // Т
+    169,   // У
+    170,   // Ф
+    'X',   // Х
+    225,   // Ц
+    171,   // Ч
+    172,   // Ш
+    226,   // Щ
+    173,   // Ъ
+    174,   // Ы
+    'b',   // Ь
+    175,   // Э
+    176,   // Ю
+    177,   // Я
+  
+    'a',   // а
+    178,   // б
+    179,   // в
+    180,   // г
+    227,   // д
+    'e',   // е
+    182,   // ж
+    183,   // з
+    184,   // и
+    185,   // й
+    186,   // к
+    187,   // л
+    188,   // м
+    189,   // н
+    'o',   // о
+    190,   // п
+    'p',   // р
+    'c',   // с
+    191,   // т
+    'y',   // у
+    228,   // ф
+    'x',   // х
+    229,   // ц
+    192,   // ч
+    193,   // ш
+    230,   // щ
+    194,   // ъ
+    195,   // ы
+    196,   // ь
+    197,   // э
+    198,   // ю
+    199    // я
+  };
+  uint8_t prevChar = 0;
+  #define charCount strlenUTF8
+  
+  uint8_t strlenUTF8(char *s) {
+    uint8_t count = 0;
+    unsigned char c;
+    while (*s) {
+      count++;
+      c = *s++;
+      if (c >= 0xC0) {
+        *s++;
+      }
+    }
+    return count;
+  }
+  
+  void substrUTF8(char* source, char* dest, uint8_t fromPos, uint8_t count) {
+    unsigned char c;
+    while ((fromPos-- >= 1) and (*source)) {
+      c = *source++;
+      if (c >= 0xC0)
+        *source++;
+    }
+    while ((count-- > 0) and (*source)) {
+      c = *source++;
+      *dest++ = c;
+      if (c >= 0xC0)
+        *dest++ = *source++;
+    }
+    *dest = 0;
+  }
+  const uint8_t charLen = 2;
+#else
+  #define charCount strlen
+  const uint8_t charLen = 1;
+#endif
 
 // When the display powers up, it is configured as follows:
 //
@@ -310,14 +417,19 @@ eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
 }
 
 bool  LiquidCrystal_I2C_Menu::printTitle(const char title[]) {
-  uint8_t l = strlen(title);
+  uint8_t l = charCount(title);
   char * buffer;
   clear();
   if (l > 0) {
     l = min(l, _cols);
-    buffer = (char*) malloc(l + 1);
-    memcpy(buffer, title, l);
-    buffer[l] = '\0';
+    #ifdef CYRILLIC_DISPLAY
+      buffer = (char*) malloc (l * 2 + 1);
+      substrUTF8(title, buffer, 0, l);
+    #else
+      buffer = (char*) malloc(l + 1);
+      memcpy(buffer, title, l);
+      buffer[l] = '\0';
+    #endif
     printAt(0, 0, buffer);
     free(buffer);
     return 1;
@@ -333,7 +445,11 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
   uint8_t offset = 0;
   uint8_t lineLength = _cols - 1;
   bool needRepaint = 1;
-  char buf[_cols];
+  #ifdef CYRILLIC_DISPLAY
+    char buffer[_cols * 2];
+  #else
+    char buffer[_cols];
+  #endif
   eEncoderState encoderState = eNone;
   createChar(0, scrollUp);
   createChar(1, scrollDown);
@@ -342,17 +458,21 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
       needRepaint = 0;
       clear();
       // Вывод фрамента текстовой строки
-      for (uint8_t i = 0; i < min(_rows, (strlen(str) + lineLength - 1) / lineLength); i++) {
-        memcpy(buf, &str[offset + i * lineLength], lineLength);
-        buf[lineLength] = '\0';
-        printAt(0, i, buf);
+      for (uint8_t i = 0; i < min(_rows, (charCount(str) + lineLength - 1) / lineLength); i++) {
+        #ifdef CYRILLIC_DISPLAY
+          substrUTF8(str, buffer, offset + i * lineLength, lineLength);
+        #else
+          memcpy(buffer, &str[offset + i * lineLength], lineLength);
+          buffer[lineLength] = '\0';
+        #endif
+        printAt(0, i, buffer);
       }
       // Отображение полосы прокрутки
       if (offset > 0) {
         setCursor(lineLength, 0);
         write(0); // стрелка вверх
       }
-      if (strlen(str) > (unsigned)(offset + _rows * lineLength)) {
+      if (charCount(str) > (unsigned)(offset + _rows * lineLength)) {
         setCursor(lineLength, _rows - 1);
         write(1); // стрелка вниз
       }
@@ -371,7 +491,7 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
     }
     else if (encoderState == eRight) {
       // Выполнить прокрутку вниз
-      if (strlen(str) > (unsigned)(offset + _rows * lineLength)) {
+      if (charCount(str) > (unsigned)(offset + _rows * lineLength)) {
         offset += lineLength;
         needRepaint = 1;
       }
@@ -380,12 +500,25 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
   clear();
 }
 
-bool LiquidCrystal_I2C_Menu::isEditable(char ch, const char availSymbols[]) {
-  if (ch == '\0') return 1;
+bool LiquidCrystal_I2C_Menu::isEditable(const char* ch, const char availSymbols[]) {
+  if (ch[0] == '\0') return 1;
   byte l = strlen(availSymbols);
-  for (byte i = 0; i < l; i++) {
-    if (availSymbols[i] == ch) return 1;
-  }
+  #ifdef CYRILLIC_DISPLAY
+    byte i = 0;
+    while (i < l) {
+      if (availSymbols[i] == ch[0]) {
+        if (uint8_t(ch[0]) < 0xC0) return 1;
+        i++;
+        if (availSymbols[i] == ch[1]) return 1;
+      }
+      else if (uint8_t(availSymbols[i]) >= 0xC0) i++;
+      i++;
+    }
+  #else
+    for (byte i = 0; i < l; i++) {
+      if (availSymbols[i] == *ch) return 1;
+    }
+  #endif
   return 0;
 }
 
@@ -400,7 +533,7 @@ bool LiquidCrystal_I2C_Menu::getNextEditable(char S[], uint8_t lenS, const char 
       currentPos = 254;
       return 0;
     }
-    if (isEditable(S[i], availSymbols)) {
+    if (isEditable(&S[i * charLen], availSymbols)) {
       currentPos = i;
       return 1;
     }
@@ -410,13 +543,18 @@ bool LiquidCrystal_I2C_Menu::getNextEditable(char S[], uint8_t lenS, const char 
 bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uint8_t len, const char availSymbols[], bool _signed) {
   eEncoderState encoderState = eNone;
   uint8_t pos = 0;
-  uint8_t l = len;
-  if (l > _cols - 4) l = _cols - 4;
-  char tmpBuffer[_cols + 1];
   uint8_t hasTitle = printTitle(title);
+  uint8_t l = len;
 
-  memcpy(tmpBuffer, buffer, l);
-  tmpBuffer[l] = '\0';
+  if (l > _cols - 4) l = _cols - 4;
+  char *tmpBuffer = (char*) malloc (l * charLen + 1);
+  memset(tmpBuffer, '\0', l * charLen + 1);
+  #ifdef CYRILLIC_DISPLAY
+    substrUTF8(buffer, tmpBuffer, 0, l);
+  #else
+    memcpy(tmpBuffer, buffer, l);
+  #endif
+
   printAt(0, hasTitle, tmpBuffer);
 
   createChar(0, iconOk);
@@ -426,8 +564,22 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
   setCursor(_cols - 1, hasTitle); // Cancel
   write(1);
 
+  #ifdef CYRILLIC_DISPLAY
+    // Зарезервируем второй байт для однобайтных символов
+    char *s = buffer;
+    char *d = tmpBuffer;
+    for (uint8_t i = 0; i < l; i++) {
+      *d++ = *s;
+      if (uint8_t(*s++) >= 0xC0)
+        *d++ = *s++;
+      else
+        *d++ = 1;
+    }
+    *d = '\0';
+  #endif
+
   // Переместимся к первому редактируемому символу
-  if (!_signed & (!isEditable(tmpBuffer[pos], availSymbols))) {
+  if (!_signed & (!isEditable(&tmpBuffer[pos], availSymbols))) {
     if (!getNextEditable(tmpBuffer, len, availSymbols, pos, 1))
       setCursor(_cols - 3, hasTitle);
     else
@@ -489,7 +641,20 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
           if (pos == 254) { // Выбран OK
             noCursor();
             clear();
-            memcpy(buffer, tmpBuffer, l);
+            #ifdef CYRILLIC_DISPLAY
+              // Удалить лишние байты из буфера
+              char *s = tmpBuffer;
+              char *d = buffer;
+              while (*s) {
+                if (*s != 1)
+                  *d++ = *s++;
+                else
+                  s++;
+              }
+              *d = '\0';
+            #else
+              memcpy(buffer, tmpBuffer, l);
+            #endif
             return 1;
           }
           // Редактирование выбранного символа
@@ -506,23 +671,31 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
                 }
               case eLeft: {
                   if ((_signed) & (pos == 0)) {
-                    if (!getNextSymbol(tmpBuffer[pos], 0, NUMERIC_SIGNS, 1)) continue;
+                    if (!getNextSymbol(&tmpBuffer[pos * charLen], 0, NUMERIC_SIGNS, 1)) continue;
                   }
                   else {
-                    if (!getNextSymbol(tmpBuffer[pos], 0, availSymbols)) continue;
+                    if (!getNextSymbol(&tmpBuffer[pos * charLen], 0, availSymbols)) continue;
                   }
-                  printAt(pos, hasTitle, tmpBuffer[pos]);
+                  printAt(pos, hasTitle, tmpBuffer[pos * charLen]);
+                  #ifdef CYRILLIC_DISPLAY
+                    if (uint8_t(tmpBuffer[pos * charLen]) >= 0xC0)
+                      print(tmpBuffer[pos * charLen + 1]);
+                  #endif
                   setCursor(pos, hasTitle);
                   continue;
                 }
               case eRight: {
                   if ((_signed) & (pos == 0)) {
-                    if (!getNextSymbol(tmpBuffer[pos], 1, NUMERIC_SIGNS, 1)) continue;
+                    if (!getNextSymbol(&tmpBuffer[pos * charLen], 1, NUMERIC_SIGNS, 1)) continue;
                   }
                   else {
-                    if (!getNextSymbol(tmpBuffer[pos], 1, availSymbols)) continue;
+                    if (!getNextSymbol(&tmpBuffer[pos * charLen], 1, availSymbols)) continue; // Можно и здесь установить флаг looped
                   }
-                  printAt(pos, hasTitle, tmpBuffer[pos]);
+                  printAt(pos, hasTitle, tmpBuffer[pos * charLen]);
+                  #ifdef CYRILLIC_DISPLAY
+                    if (uint8_t(tmpBuffer[pos * charLen]) >= 0xC0)
+                      print(tmpBuffer[pos * charLen + 1]);
+                  #endif
                   setCursor(pos, hasTitle);
                   continue;
                 }
@@ -536,26 +709,73 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
   }
 }
 
-bool LiquidCrystal_I2C_Menu::getNextSymbol(char &ch, bool direction, const char availSymbols[], bool looped) {
-  if (ch == '\0') {
-    ch = availSymbols[0];
+bool LiquidCrystal_I2C_Menu::getNextSymbol(char *ch, bool direction, const char availSymbols[], bool looped) {
+  if (ch[0] == '\0') {
+    ch[0] = availSymbols[0];
+    #ifdef CYRILLIC_DISPLAY
+	  if (uint8_t(ch[0]) >= 0xC0)
+	    ch[1] = availSymbols[1];
+	  else 
+        ch[1] = 1;
+    #endif
     return 1;
   }
-  for (uint8_t i = 0; i < strlen(availSymbols); i++) {
-    if (availSymbols[i] == ch) {
-      if (direction) {
-        if (++i < strlen(availSymbols)) ch = availSymbols[i];
-        else if (looped) ch = availSymbols[0];
-        return 1;
+  #ifdef CYRILLIC_DISPLAY
+    bool match = false;
+    uint8_t b = 0;
+    uint8_t i = 0;
+    while (i < strlen(availSymbols)) {
+      match = (availSymbols[i] == ch[0]);
+      if ((match) and (uint8_t(ch[0]) >= 0xC0)) {
+        match = (availSymbols[i + 1] == ch[1]);
+        b = 1;
       }
-      else {
-        if (i > 0) ch = availSymbols[--i];
-        else if (looped) ch = availSymbols[strlen(availSymbols) - 1];
-        return 1;
+      if (match) {
+        if (direction) {
+          i = i + b;
+          if (++i < strlen(availSymbols));
+          else if (looped) i = 0;
+          else return 0;
+
+          ch[0] = availSymbols[i];
+          if (uint8_t(ch[0]) >= 0xC0) ch[1] = availSymbols[i + 1];
+          else ch[1] = 1;
+          return 1;
+        }
+        else {
+          if (i > 0) i--;
+          else if (looped) i = strlen(availSymbols) - 1;
+          else return 0;
+          if ((i > 0) and (uint8_t(availSymbols[i - 1]) >= 0xC0)) {
+            ch[1] = availSymbols[i];
+            i--;
+          }
+          else ch[1] = 1;
+          ch[0] = availSymbols[i];
+          return 1;
+        }
+        return 0;
       }
-      return 0;
+      i++;
     }
-  }
+  #else
+    for (uint8_t i = 0; i < strlen(availSymbols); i++) {
+      if (availSymbols[i] == ch[0]) {
+        if (direction) {
+          if (++i < strlen(availSymbols)) ch[0] = availSymbols[i];
+          else if (looped) ch[0] = availSymbols[0];
+          return 1;
+        }
+        else {
+          if (i > 0) ch[0] = availSymbols[--i];
+          else if (looped) ch[0] = availSymbols[strlen(availSymbols) - 1];
+          return 1;
+        }
+        return 0;
+      }
+    }
+  #endif
+
   return 0;
 }
 
@@ -590,16 +810,35 @@ uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, int list[], uint8
 uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], int list[], uint8_t count, bool show_selected, uint8_t preselected) {
   return _selectVal(title, list, count, show_selected, preselected);
 }
+/*
+void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], char *value, uint8_t len) {
+  #ifdef CYRILLIC_DISPLAY
+    substrUTF8(value, buffer, 0, len);
+  #else
+    memcpy(buffer, value, len);
+    buffer[len] = '\0';
+  #endif;
+}
+*/
+void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], int value, uint8_t len) {
+  char format[8] = {'\0'};
+  sprintf(format, "%%-%dd", len);
+  sprintf(buffer, format, value);
+}
+/*
+void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], String value, uint8_t len) {
+  #ifdef CYRILLIC_DISPLAY
+    substrUTF8(value.c_str(), buffer, 0, len);
+  #else
+    memcpy(buffer, value.c_str(), len);
+    buffer[len] = '\0';
+  #endif;
+}
+*/
 
 void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], char *value, uint8_t len) {
   char format[12] = {'\0'};
   sprintf(format, "%%-%d.%ds", len, len);
-  sprintf(buffer, format, value);
-}
-
-void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], int value, uint8_t len) {
-  char format[8] = {'\0'};
-  sprintf(format, "%%-%dd", len);
   sprintf(buffer, format, value);
 }
 
@@ -616,38 +855,51 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
   uint8_t lineLength = _cols - 3;
   uint8_t selected = preselected;
   bool needRepaint = 1;
-  char buf[_cols + 1];
+  char *buffer;
   uint8_t hasTitle = printTitle(title);
 
   createChar(0, scrollUp);
   createChar(1, scrollDown);
-  createChar(2, iconOk);
+  createChar(2, scrollBoth);
+  createChar(3, iconOk);
 
   eEncoderState encoderState = eNone;
   while (1) {
     if (needRepaint) {
       needRepaint = 0;
       // Перерисовка всего содержимого экрана кроме заголовка
+      #ifdef CYRILLIC_DISPLAY
+        buffer = (char*) malloc (_cols * 2 + 1);
+      #else
+        buffer = (char*) malloc (_cols + 1);
+      #endif
       for (uint8_t i = 0; i < min(count, _rows - hasTitle); i++) {
-        _prepareForPrint(buf, list[offset + i], lineLength);
-        printfAt(0, i + hasTitle, "  %s ", buf);
+        _prepareForPrint(buffer, list[offset + i], lineLength);
+        printfAt(0, i + hasTitle, "  %s ", buffer);
         if (show_selected) {
           if (offset + i == selected) {
             setCursor(1, i + hasTitle);
-            write(2);
+            write(3);
           }
         }
       }
+      free(buffer);
       // Вывод курсора
       printAt(0, cursorOffset + hasTitle, '>');
       // Отображение полосы прокрутки
-      if (offset > 0) {
+      if ((_rows - hasTitle == 1) and (offset > 0) and (offset + _rows - hasTitle < count)) {
         setCursor(_cols - 1, hasTitle);
-        write(0); // стрелка вверх
+        write(2); // двойная стрелка
       }
-      if (offset + _rows - hasTitle < count) {
-        setCursor(_cols - 1, _rows - 1);
-        write(1); // стрелка вниз
+	  else {
+        if (offset > 0) {
+          setCursor(_cols - 1, hasTitle);
+          write(0); // стрелка вверх
+        }
+        if (offset + _rows - hasTitle < count) {
+          setCursor(_cols - 1, _rows - 1);
+          write(1); // стрелка вниз
+        }
       }
     }
     encoderState = getEncoderState();
@@ -680,13 +932,13 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
           continue;
         }
       case eButton: {
-          if ((show_selected)&(offset + cursorOffset != selected)) {
+          if ((show_selected) & (offset + cursorOffset != selected)) {
             // Изменился выбранный элемент
             if ((selected >= offset) & (selected < offset + _rows - hasTitle))
               printAt(1, selected - offset + hasTitle, ' ');
             selected = offset + cursorOffset;
             setCursor(1, cursorOffset + hasTitle);
-            write(2);
+            write(3);
             continue;
           }
           else {
@@ -709,6 +961,7 @@ uint8_t LiquidCrystal_I2C_Menu::showMenu(sMenuItem menu[], uint8_t menuLen, bool
 
   createChar(0, scrollUp);
   createChar(1, scrollDown);
+  createChar(2, scrollBoth);
   selectedItem = showSubMenu(1);
   clear();
   return selectedItem;
@@ -734,7 +987,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
   }
 
   if (subMenuLen == 0) // Подменю нет
-      return key; // Вернем ключ выбранного пункта
+    return key; // Вернем ключ выбранного пункта
 
   // Отображение подменю
   #ifdef SCROLL_LONG_CAPTIONS
@@ -747,29 +1000,41 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
     if (needRepaint) {
       needRepaint = 0;
       clear();
-      buffer = (char*) malloc (_cols + 1);
+      buffer = (char*) malloc (_cols * 2 + 1);
       if (_showMenuTitle) {
-        memcpy(buffer, _menu[subMenuIndex].caption, _cols);
-        buffer[_cols] = 0;
+        #ifdef CYRILLIC_DISPLAY
+          substrUTF8(_menu[subMenuIndex].caption, buffer, 0, _cols);
+        #else
+          memcpy(buffer, _menu[subMenuIndex].caption, _cols);
+          buffer[_cols] = 0;
+        #endif
         printAt(0, 0, buffer);
       }
-      buffer[_cols] = 0;
+      //buffer[_cols] = 0;
       for (uint8_t i = 0; i < min(subMenuLen, _rows - _showMenuTitle); i++) {
-        // " %-*.*s" does not work wtf
-        memcpy(buffer, subMenu[offset + i]->caption, itemMaxLength);
-        buffer[itemMaxLength] = 0;
+        #ifdef CYRILLIC_DISPLAY
+          substrUTF8(subMenu[offset + i]->caption, buffer, 0, itemMaxLength);
+        #else
+          memcpy(buffer, subMenu[offset + i]->caption, itemMaxLength);
+          buffer[itemMaxLength] = 0;
+        #endif;
         printAt(1 , i + _showMenuTitle,  buffer);
       }
 
       printAt(0, cursorOffset + _showMenuTitle, '>');
-
-      if (offset > 0) {
+      if ((_rows - _showMenuTitle == 1) and (offset > 0) and (offset + _rows - _showMenuTitle < subMenuLen)) {
         setCursor(_cols - 1, _showMenuTitle);
-        write(0);
+        write(2); // двойная стрелка
       }
-      if (offset + _rows - _showMenuTitle < subMenuLen) {
-        setCursor(_cols - 1, _rows - 1);
-        write(1);
+	  else {
+        if (offset > 0) {
+          setCursor(_cols - 1, _showMenuTitle);
+          write(0);
+        }
+        if (offset + _rows - _showMenuTitle < subMenuLen) {
+          setCursor(_cols - 1, _rows - 1);
+          write(1);
+        }
       }
       free(buffer);
     }
@@ -784,7 +1049,15 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             #ifdef SCROLL_LONG_CAPTIONS
               if (_scrollPos) {
                 // Если предыдущий пункт прокручивался, то печатаем его заново
-                printAt(1, cursorOffset + _showMenuTitle, String(subMenu[cursorOffset + offset]->caption).substring(0, itemMaxLength));
+                #ifdef CYRILLIC_DISPLAY
+                  buffer = (char*) malloc (_cols * 2 + 1);
+                  substrUTF8(subMenu[cursorOffset + offset]->caption, buffer, 0, itemMaxLength);
+                #else
+                  buffer = (char*) malloc (_cols + 1);
+                  memcpy(buffer, subMenu[cursorOffset + offset]->caption, itemMaxLength);
+                #endif
+                printAt(1, cursorOffset + _showMenuTitle, buffer);
+                free(buffer);
                 _scrollPos = 0;
               }
             #endif
@@ -807,7 +1080,15 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             #ifdef SCROLL_LONG_CAPTIONS
               if (_scrollPos) {
                 // Если предыдущий пункт прокручивался, то печатаем его заново
-                printAt(1, cursorOffset + _showMenuTitle, String(subMenu[cursorOffset + offset]->caption).substring(0, itemMaxLength));
+                #ifdef CYRILLIC_DISPLAY
+                  buffer = (char*) malloc (_cols * 2 + 1);
+                  substrUTF8(subMenu[cursorOffset + offset]->caption, buffer, 0, itemMaxLength);
+                #else
+                  buffer = (char*) malloc (_cols + 1);
+                  memcpy(buffer, subMenu[cursorOffset + offset]->caption, itemMaxLength);
+                #endif
+                printAt(1, cursorOffset + _showMenuTitle, buffer);
+                free(buffer);
                 _scrollPos = 0;
               }
             #endif
@@ -829,7 +1110,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
           }
           // Если для данного пункта есть обработчик ...
           _selectedMenuItem = subMenu[cursorOffset + offset]->key;
-          if (subMenu[cursorOffset + offset]->handler != NULL) { 
+          if (subMenu[cursorOffset + offset]->handler != NULL) {
             (*subMenu[cursorOffset + offset]->handler)(); // ... то выполним его
             // Стрелки для прокрутки могли испортить, создадим их заново
             createChar(0, scrollUp);
@@ -843,6 +1124,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
             }
           }
           #ifdef SCROLL_LONG_CAPTIONS
+            // Отсрочка прокрутки дисплея
             _scrollTime = millis() + DELAY_BEFORE_SCROLL;
           #endif
           needRepaint = 1;
@@ -850,24 +1132,29 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
         }
       case eNone: {
           #ifdef SCROLL_LONG_CAPTIONS
-            _scrollingCaption = subMenu[cursorOffset + offset]->caption;
-            if (_scrollingCaption.length() > itemMaxLength) {
+            if (charCount(subMenu[cursorOffset + offset]->caption) > itemMaxLength) {
               if (_scrollTime < millis()) {
                 _scrollPos++;
-                if (_scrollPos == _scrollingCaption.length() - itemMaxLength)
+                if (_scrollPos == charCount(subMenu[cursorOffset + offset]->caption) - itemMaxLength)
                   _scrollTime = millis() + DELAY_AFTER_SCROLL;
-                else if (_scrollPos > _scrollingCaption.length() - itemMaxLength) {
+                else if (_scrollPos > charCount(subMenu[cursorOffset + offset]->caption) - itemMaxLength) {
                   _scrollPos = 0;
                   _scrollTime = millis() + DELAY_BEFORE_SCROLL;
                 }
                 else
                   _scrollTime = millis() + SCROLL_DELAY;
-                printAt(1, cursorOffset + _showMenuTitle, _scrollingCaption.substring(_scrollPos, _scrollPos + itemMaxLength));
+                #ifdef CYRILLIC_DISPLAY
+                  buffer = (char*) malloc (itemMaxLength * 2 + 1);
+                  substrUTF8(subMenu[cursorOffset + offset]->caption, buffer, _scrollPos, itemMaxLength);
+                #else
+                  memcpy(buffer, subMenu[cursorOffset + offset]->caption + _scrollPos, itemMaxLength);
+                  buffer = (char*) malloc (itemMaxLength + 1);
+                #endif
+                printAt(1, cursorOffset + _showMenuTitle, buffer);
+                free(buffer);
               }
             }
-
           #endif // SCROLL_LONG_CAPTIONS
-
           encoderIdle();
         }
     }
@@ -890,7 +1177,26 @@ inline void LiquidCrystal_I2C_Menu::command(uint8_t value) {
 }
 
 inline size_t LiquidCrystal_I2C_Menu::write(uint8_t value) {
-  send(value, Rs);
+  #ifdef CYRILLIC_DISPLAY
+    if ((value == 208) or (value == 209))
+      prevChar = value;
+    else if (prevChar == 208) { // А - п
+      if ((value >= 144) and (value <= 191))
+        send(pgm_read_word_near(rusRecodeTable + value - 144), Rs);
+      else if (value == 129) // Ё
+        send(162, Rs);
+      prevChar = 0;
+    }
+    else if (prevChar == 209) { // р - я
+      if ((value >= 128) and (value <= 143))
+        send(pgm_read_word_near(rusRecodeTable + value - 80), Rs);
+      else if (value == 145) // ё
+        send(181, Rs);
+      prevChar = 0;
+    }
+    else
+  #endif
+    send(value, Rs);
   return 1;
 }
 
@@ -940,4 +1246,4 @@ void LiquidCrystal_I2C_Menu::printstr(const char c[]) {
   //This function is not identical to the function used for "real" I2C displays
   //it's here so the user sketch doesn't have to be changed
   print(c);
-} 
+}

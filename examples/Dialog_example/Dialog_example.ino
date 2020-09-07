@@ -24,5 +24,5 @@ void loop() {
     lcd.print("Yes selected");
   else
     lcd.print("No selected");
-  delay(2000);
+  while (lcd.getEncoderState() == eNone);
 }

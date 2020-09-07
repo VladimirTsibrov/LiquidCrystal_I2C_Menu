@@ -56,6 +56,5 @@ void loop() {
   for (uint8_t i = 0; i < len; i++)
     lcd.printf("%d ", A[i]);
   
-  // Ожидаем нажатия кнопки для продолжения
-  while (lcd.getEncoderState() != eButton);
+  while (lcd.getEncoderState() == eNone);
 }

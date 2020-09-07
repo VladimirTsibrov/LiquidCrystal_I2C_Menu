@@ -29,6 +29,7 @@ void setup() {
   lcd.attachEncoder(pinDT, pinCLK, pinSW);
   lcd.attachIdleFunc(myIdleFunc);
   pinMode(LED_BUILTIN, OUTPUT);
+  lcd.print("Press the button");
 }
 
 int x = 0;
@@ -41,5 +42,6 @@ void loop() {
     x = lcd.inputVal("Input some val", 0, 100, x);
     lcd.printMultiline("Some text here");
     lcd.clear();
+    lcd.print("Press the button");
   }
 }

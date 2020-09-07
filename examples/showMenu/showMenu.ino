@@ -15,7 +15,7 @@ LiquidCrystal_I2C_Menu lcd(0x27, 20, 4);
 #define pinSW  4
 
 // Объявим перечисление, используемое в качестве ключа пунктов меню
-enum {mkBack, mkRoot, mkRun, mkOptions, mkMode, mkSpeed, mkLog, mkSelftest, mkHelp, mkFAQ, mkIndex, mkAbout};
+enum {mkBack, mkRoot, mkRun, mkOptions, mkMode, mkSpeed, mkLog, mkSelftest, mkHelp, mkFAQ, mkIndex, mkAbout, mkLongCaption};
 
 // Описание меню
 // структура пункта меню: {ParentKey, Key, Caption, [Handler]}
@@ -33,6 +33,7 @@ sMenuItem menu[] = {
       {mkHelp, mkIndex, "Index"},
       {mkHelp, mkAbout, "About"},
       {mkHelp, mkBack, "Back"},
+    {mkRoot, mkLongCaption, "Long caption scrolling example"},
     {mkRoot, mkBack, "Exit menu"}
 };
 
@@ -63,7 +64,9 @@ void loop() {
     lcd.print("Index selected");
   else if (selectedMenuItem == mkAbout)
     lcd.print("About selected");
+  else if (selectedMenuItem == mkLongCaption)
+    lcd.print("Scrolling selected");
   else if (selectedMenuItem == mkBack)
     lcd.print("Exit selected");
-  delay(2000);
+  while (lcd.getEncoderState() == eNone);
 }

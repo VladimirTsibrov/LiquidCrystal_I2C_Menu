@@ -24,12 +24,12 @@ void setup() {
 
 void loop() {
   char *buffer;
-  buffer = (char*) malloc(30); // Буфер для временного храненя строки
+  buffer = (char*) malloc(30); // Буфер для временного хранения строки
   strcpy_P(buffer, (char*)pgm_read_word(&(text[0]))); // Копируем строку в буфер
   lcd.printMultiline(buffer); // Выводим содержимое буфера на экран
   strcpy_P(buffer, (char*)pgm_read_word(&(text[1]))); // Аналогично со второй строкой
   lcd.printMultiline(buffer);
-  free(buffer); // Овобождаем буфер
+  free(buffer); // Освобождаем буфер
   
   // Другой пример хранения строк в памяти программ - использование макроса F().
   lcd.printMultiline(F("Using F() macro example. Press button to continue."));

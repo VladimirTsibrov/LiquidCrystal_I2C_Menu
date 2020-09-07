@@ -810,31 +810,12 @@ uint8_t LiquidCrystal_I2C_Menu::selectVal(const String &title, int list[], uint8
 uint8_t LiquidCrystal_I2C_Menu::selectVal(const char title[], int list[], uint8_t count, bool show_selected, uint8_t preselected) {
   return _selectVal(title, list, count, show_selected, preselected);
 }
-/*
-void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], char *value, uint8_t len) {
-  #ifdef CYRILLIC_DISPLAY
-    substrUTF8(value, buffer, 0, len);
-  #else
-    memcpy(buffer, value, len);
-    buffer[len] = '\0';
-  #endif;
-}
-*/
+
 void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], int value, uint8_t len) {
   char format[8] = {'\0'};
   sprintf(format, "%%-%dd", len);
   sprintf(buffer, format, value);
 }
-/*
-void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], String value, uint8_t len) {
-  #ifdef CYRILLIC_DISPLAY
-    substrUTF8(value.c_str(), buffer, 0, len);
-  #else
-    memcpy(buffer, value.c_str(), len);
-    buffer[len] = '\0';
-  #endif;
-}
-*/
 
 void LiquidCrystal_I2C_Menu::_prepareForPrint(char buffer[], char *value, uint8_t len) {
   char format[12] = {'\0'};
@@ -1017,7 +998,7 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
         #else
           memcpy(buffer, subMenu[offset + i]->caption, itemMaxLength);
           buffer[itemMaxLength] = 0;
-        #endif;
+        #endif
         printAt(1 , i + _showMenuTitle,  buffer);
       }
 

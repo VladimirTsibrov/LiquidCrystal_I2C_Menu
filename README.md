@@ -28,5 +28,5 @@
 Для включения поддержки дисплеев с кириллицей необходимо в файле LiquidCrystal_I2C_Menu.h раскомментировать строку #define CYRILLIC_DISPLAY. После этого станет возможным использование русского текста в меню и других функциях библиотеки.
 
 
-##Более подробно
+## Более подробно
 Более подробную информацию о библиотеке и её функциях вы найдете здесь: [https://tsibrov.blogspot.com/2020/09/LiquidCrystal-I2C-Menu.html](https://tsibrov.blogspot.com/2020/09/LiquidCrystal-I2C-Menu.html "https://tsibrov.blogspot.com/2020/09/LiquidCrystal-I2C-Menu.html")

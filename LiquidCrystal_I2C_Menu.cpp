@@ -413,6 +413,9 @@ eEncoderState LiquidCrystal_I2C_Menu::getEncoderState() {
       _pinAPrev = encoderA;
     }
   }
+  #if defined(INACTIVITY_TIMEOUT)
+    if (Result != eNone) lastActivityTime = millis();
+  #endif
   return Result;
 }
 
@@ -450,6 +453,9 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
   #else
     char buffer[_cols];
   #endif
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
   eEncoderState encoderState = eNone;
   createChar(0, scrollUp);
   createChar(1, scrollDown);
@@ -479,6 +485,10 @@ void LiquidCrystal_I2C_Menu::printMultiline(const char str[]) {
     }
 
     encoderState = getEncoderState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) return;
+    #endif
     if (encoderState == eNone) {
       encoderIdle(); // При бездействии выполняем encoderIdle
     }
@@ -556,7 +566,10 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
   #endif
 
   printAt(0, hasTitle, tmpBuffer);
-
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
+  
   createChar(0, iconOk);
   createChar(1, iconCancel);
   setCursor(_cols - 3, hasTitle); // Ok
@@ -592,6 +605,14 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
   // Основной цикл - выбор символа для редактирования или OK/Cancel
   while (1) {
     encoderState = getEncoderState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) {
+        noCursor();
+        clear();
+        return false;
+      }
+    #endif
     switch (encoderState) {
       case eNone: {
           encoderIdle();
@@ -664,6 +685,14 @@ bool LiquidCrystal_I2C_Menu::_inputStrVal(const char title[], char buffer[], uin
           while (encoderState != eButton)
           {
             encoderState = getEncoderState();
+            #ifdef INACTIVITY_TIMEOUT
+              // Выход по таймауту
+              if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) {
+                noCursor();
+                clear();
+                return false;
+              }
+            #endif
             switch (encoderState) {
               case eNone: {
                   encoderIdle();
@@ -844,6 +873,10 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
   createChar(2, scrollBoth);
   createChar(3, iconOk);
 
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
+  
   eEncoderState encoderState = eNone;
   while (1) {
     if (needRepaint) {
@@ -884,9 +917,15 @@ uint8_t LiquidCrystal_I2C_Menu::_selectVal(const char title[], T list[], uint8_t
       }
     }
     encoderState = getEncoderState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) {
+        clear();
+        return preselected;
+      }
+    #endif
     switch (encoderState) {
       case eNone: {
-
           encoderIdle();
           continue;
         }
@@ -939,7 +978,10 @@ uint8_t LiquidCrystal_I2C_Menu::showMenu(sMenuItem menu[], uint8_t menuLen, bool
   _menu = menu;
   _menuLen = menuLen;
   uint8_t selectedItem;
-
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
+  
   createChar(0, scrollUp);
   createChar(1, scrollDown);
   createChar(2, scrollBoth);
@@ -1020,6 +1062,13 @@ uint8_t LiquidCrystal_I2C_Menu::showSubMenu(uint8_t key) {
       free(buffer);
     }
     encoderState = getEncoderState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) {
+        free(subMenu);
+        return 0;
+      }
+    #endif
     switch (encoderState) {
       case eLeft: {
           // Перемещение курсора вверх

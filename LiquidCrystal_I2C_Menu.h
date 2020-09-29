@@ -60,6 +60,8 @@
 #define DELAY_BEFORE_SCROLL 4000
 #define DELAY_AFTER_SCROLL  2000
 
+#define INACTIVITY_TIMEOUT 60000 // Таймаут бездействия до выхода из функций
+
 enum eEncoderState {eNone, eLeft, eRight, eButton};
 
 struct sMenuItem {
@@ -241,12 +243,12 @@ class LiquidCrystal_I2C_Menu : public Print {
     /**
        Выбор значения из списка. Возвращает индекс выбранного элемента.
     */
-    uint8_t selectVal(const String &, const char**, uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
-    uint8_t selectVal(const char[], const char**, uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
-    uint8_t selectVal(const String &, String[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
-    uint8_t selectVal(const char[], String[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
-    uint8_t selectVal(const String &, int[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
-    uint8_t selectVal(const char[], int[], uint8_t, bool = true, uint8_t = -1); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const String &, const char**, uint8_t, bool = true, uint8_t = 0); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const char[], const char**, uint8_t, bool = true, uint8_t = 0); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const String &, String[], uint8_t, bool = true, uint8_t = 0); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const char[], String[], uint8_t, bool = true, uint8_t = 0); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const String &, int[], uint8_t, bool = true, uint8_t = 0); //title, list of values, count, show selected, selected index
+    uint8_t selectVal(const char[], int[], uint8_t, bool = true, uint8_t = 0); //title, list of values, count, show selected, selected index
 
     /**
        Функция отображения меню. Возвращает ключ выбранного пункта меню.
@@ -280,6 +282,9 @@ class LiquidCrystal_I2C_Menu : public Print {
     #ifdef SCROLL_LONG_CAPTIONS
       uint8_t _scrollPos;
       unsigned long _scrollTime;
+    #endif
+    #if defined(INACTIVITY_TIMEOUT)
+      unsigned long lastActivityTime;
     #endif
     uint8_t _selectedMenuItem;
     void  (*_IdleFunc)() = NULL;
@@ -318,8 +323,15 @@ template <typename T> T LiquidCrystal_I2C_Menu::inputValAt(uint8_t x, uint8_t y,
   eEncoderState encoderState = eNone;
   printAt(x, y, v);
   String S;
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
   while (1) {
     encoderState = getEncoderState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) return defaultValue;
+    #endif
     switch (encoderState) {
       case eNone:
         encoderIdle();

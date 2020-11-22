@@ -83,7 +83,7 @@ uint8_t iconCancel[8]  = {0x0, 0x0, 0x11, 0xa, 0x4, 0xa, 0x11};
   uint8_t prevChar = 0;
   #define charCount strlenUTF8
   
-  uint8_t strlenUTF8(char *s) {
+  uint8_t strlenUTF8(const char *s) {
     uint8_t count = 0;
     unsigned char c;
     while (*s) {
@@ -96,7 +96,7 @@ uint8_t iconCancel[8]  = {0x0, 0x0, 0x11, 0xa, 0x4, 0xa, 0x11};
     return count;
   }
   
-  void substrUTF8(char* source, char* dest, uint8_t fromPos, uint8_t count) {
+  void substrUTF8(const char* source, char* dest, uint8_t fromPos, uint8_t count) {
     unsigned char c;
     while ((fromPos-- >= 1) and (*source)) {
       c = *source++;

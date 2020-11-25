@@ -30,8 +30,8 @@ void volumeOnChange(int newValue) {
   // Функция может использоваться для применения нового значения v непосредственно при редактировании,
   // а не при завершении редактирования.
   // Кроме того можно добавить свои эффекты на экран редактирования. Например, шкалу:
-  for (uint8_t i = 0; i < 16; i++) {
-    if (i <= newValue) // как вариант (i == newValue)
+  for (uint8_t i = 0; i < 15; i++) {
+    if (i < newValue)
       lcd.printAt(3 + i, 1, "\xFF");
     else
       lcd.printAt(3 + i, 1, "\xDB");
@@ -43,9 +43,9 @@ void longOnChange(long newValue) {
   // Тип переменной newValue должен совпадать с типом переменной l - long
   // Пример вывода шкалы для переменной, диапазон которой не совпадает с размером шкалы.
   // Решение - привести newValue к нужному диапазону функцией map
-  long pos = map(newValue, 0, 1000, 0, 15); // в шкале 16 делений
-  for (uint8_t i = 0; i < 16; i++) {
-    if (i <= pos) // как вариант (i == pos)
+  long pos = map(newValue, 0, 1000, 0, 15); // в шкале 15 делений
+  for (uint8_t i = 0; i < 15; i++) {
+    if (i < pos)
       lcd.printAt(4 + i, 1, "\xFF");
     else
       lcd.printAt(4 + i, 1, "\xDB");
